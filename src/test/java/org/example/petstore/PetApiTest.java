@@ -1,6 +1,7 @@
 package org.example.petstore;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -196,6 +198,24 @@ class PetApiTest extends BasePetstoreTest
         .then()
                 .statusCode(200)
                 .body("status", hasItem(equalTo("available")));
+    }
+
+    @Test
+    @Order(12)
+    void findByTags_returnsListOfPetsWithNonBlankName()
+    {
+        List<Pet> pets = given()
+                .queryParam("tags", "friendly")
+        .when()
+                .get("/pet/findByTags")
+        .then()
+                .statusCode(200)
+                .extract()
+                .as(new TypeRef<List<Pet>>() {});
+
+        assertThat(pets)
+                .isNotEmpty()
+                .allSatisfy(pet -> assertThat(pet.getName()).isNotBlank());
     }
 
     private static byte[] readPetPng()
